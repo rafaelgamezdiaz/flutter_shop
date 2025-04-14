@@ -1,4 +1,12 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:formz/formz.dart';
 import 'package:teslo_shop/features/shared/shared.dart';
+
+// 3- StateNotifierProvider -  se consume desde la UI
+final loginFormProvider =
+    StateNotifierProvider.autoDispose<LoginFormNotifier, LoginFormState>(
+      (ref) => LoginFormNotifier(),
+    );
 
 // 1- State del provider
 class LoginFormState {
@@ -48,9 +56,43 @@ class LoginFormState {
 }
 
 // 2- Notifier del provider
-class Notifier extends StateNotifier<> {
-  Notifier(): super();
-  
-}
+class LoginFormNotifier extends StateNotifier<LoginFormState> {
+  LoginFormNotifier() : super(LoginFormState());
 
-// 3- StateNotifierProvider -  se consume desde la UI
+  onEmailChange(String value) {
+    final newEmail = Email.dirty(value: value);
+    state = state.copyWith(
+      email: newEmail,
+      isFormValid: Formz.validate([newEmail, state.password]),
+    );
+  }
+
+  onPasswordChange(String value) {
+    final newPassword = Password.dirty(value: value);
+    state = state.copyWith(
+      password: newPassword,
+      isFormValid: Formz.validate([newPassword, state.email]),
+    );
+  }
+
+  onFormSubmit() {
+    _touchEveryField();
+    if (!state.isFormValid) return;
+    print(state);
+    // state = state.copyWith(
+    //   isFormPosted: true,
+    //   isPosting: true,
+    // );
+  }
+
+  _touchEveryField() {
+    final email = Email.dirty(value: state.email.value);
+    final password = Password.dirty(value: state.password.value);
+    state = state.copyWith(
+      isFormPosted: true,
+      email: email,
+      password: password,
+      isFormValid: Formz.validate([email, password]),
+    );
+  }
+}
