@@ -1,11 +1,15 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:formz/formz.dart';
+import 'package:teslo_shop/features/auth/presentation/providers/providers.dart';
 import 'package:teslo_shop/features/shared/infrastructure/inputs/inputs.dart';
 
-final registerFormProvider =
-    StateNotifierProvider<RegisterFormNotifier, RegisterFomState>(
-      (ref) => RegisterFormNotifier(),
-    );
+final registerFormProvider = StateNotifierProvider.autoDispose<
+  RegisterFormNotifier,
+  RegisterFomState
+>((ref) {
+  final registerUserCallback = ref.watch(authProvider.notifier).registerUser;
+  return RegisterFormNotifier(registerUserCallback: registerUserCallback);
+});
 
 class RegisterFomState {
   final FullName fullName;
@@ -63,7 +67,9 @@ class RegisterFomState {
 }
 
 class RegisterFormNotifier extends StateNotifier<RegisterFomState> {
-  RegisterFormNotifier() : super(RegisterFomState());
+  final Function(String, String, String) registerUserCallback;
+  RegisterFormNotifier({required this.registerUserCallback})
+    : super(RegisterFomState());
 
   onFullNameChange(String value) {
     final newFullName = FullName.dirty(value: value);
@@ -96,9 +102,14 @@ class RegisterFormNotifier extends StateNotifier<RegisterFomState> {
     );
   }
 
-  onFormSubmit() {
+  onFormSubmit() async {
     _touchEveryField();
     if (!state.isValid) return;
+    await registerUserCallback(
+      state.email.value,
+      state.password.value,
+      state.fullName.value,
+    );
   }
 
   _touchEveryField() {

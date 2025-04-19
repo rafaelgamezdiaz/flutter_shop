@@ -17,7 +17,9 @@ class AuthDatasourceImplementation extends AuthDatasource {
   );
 
   @override
-  Future<User> isAuthenticated(String token) {}
+  Future<User> isAuthenticated(String token) {
+    throw UnimplementedError();
+  }
 
   @override
   Future<User> login(String email, String password) async {
@@ -27,23 +29,56 @@ class AuthDatasourceImplementation extends AuthDatasource {
         data: {'email': email, 'password': password},
       );
 
-      if (response.statusCode == 200) {
+      if (response.statusCode == 201) {
         return UserMapper.fromJson(response.data);
       } else {
         throw Exception('Failed to login');
       }
+    } on DioException catch (e) {
+      if (e.response != null) {
+        if (e.response!.statusCode == 401) {
+          throw CustomError(
+            e.response?.data['message'] ?? 'Credenciales incorrectas!',
+            401,
+          ); // throw WrongCredentials();
+        } else if (e.type == DioExceptionType.connectionTimeout) {
+          throw CustomError(
+            'Revisr conexión a internet!',
+            408,
+          ); // ConnectionTimeout('Server error');
+        } else if (e.response!.statusCode == 400) {
+          throw CustomError('Bad request!', 400);
+        }
+      }
+      throw CustomError('Error inesperado!', 500);
     } catch (e) {
-      // Handle error
-      rethrow;
+      throw CustomError('Error Inesperado!', 500);
     }
   }
 
   @override
-  Future<void> logout() {}
-
-  @override
-  Future<User> register(String email, String password, String username) {
-    // TODO: implement register
-    throw UnimplementedError();
+  Future<User> register(String email, String password, String fullName) async {
+    try {
+      final response = await dio.post(
+        '/auth/register',
+        data: {'email': email, 'password': password, 'fullName': fullName},
+      );
+      if (response.statusCode == 201) {
+        return UserMapper.fromJson(response.data);
+      } else {
+        throw Exception('Failed to register');
+      }
+    } on DioException catch (e) {
+      if (e.response != null) {
+        if (e.type == DioExceptionType.connectionTimeout) {
+          throw CustomError('Revisr conexión a internet!', 408);
+        } else if (e.response!.statusCode == 400) {
+          throw CustomError('Bad request!', 400);
+        }
+      }
+      throw CustomError('Error inesperado!', 500);
+    } catch (e) {
+      throw CustomError('Error Inesperado!', 500);
+    }
   }
 }

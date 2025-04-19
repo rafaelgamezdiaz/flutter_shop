@@ -4,7 +4,7 @@ import 'package:teslo_shop/features/auth/infrastructure/infrastructure.dart';
 class AuthRepositoryImplementation extends AuthRepository {
   final AuthDatasource authDatasource;
 
-  AuthRepositoryImplementation(AuthDatasource? authDatasource)
+  AuthRepositoryImplementation({AuthDatasource? authDatasource})
     : authDatasource = authDatasource ?? AuthDatasourceImplementation();
 
   @override
@@ -17,13 +17,13 @@ class AuthRepositoryImplementation extends AuthRepository {
     return authDatasource.login(email, password);
   }
 
-  @override
-  Future<void> logout() {
-    return authDatasource.logout();
-  }
+  // @override
+  // Future<void> logout() {
+  //   return authDatasource.logout();
+  // }
 
   @override
-  Future<User> register(String email, String password, String username) {
-    return authDatasource.register(email, password, username);
+  Future<User> register(String email, String password, String fullName) {
+    return authDatasource.register(email, password, fullName);
   }
 }

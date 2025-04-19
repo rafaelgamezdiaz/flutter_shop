@@ -3,12 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:teslo_shop/config/config.dart';
 
 void main() async {
-  Environment.initEnvironment();
-  runApp(ProviderScope(child: const MainApp()));
+  await Environment.initEnvironment();
+  runApp(ProviderScope(child: const MyApp()));
 }
 
-class MainApp extends StatelessWidget {
-  const MainApp({super.key});
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
