@@ -17,8 +17,24 @@ class AuthDatasourceImplementation extends AuthDatasource {
   );
 
   @override
-  Future<User> isAuthenticated(String token) {
-    throw UnimplementedError();
+  Future<User> isAuthenticated(String token) async {
+    try {
+      final response = await dio.get(
+        '/auth/check-status',
+        options: Options(headers: {'Authorization': 'Bearer $token'}),
+      );
+      final user = UserMapper.fromJson(response.data);
+      return user;
+    } on DioException catch (e) {
+      if (e.response != null) {
+        if (e.response!.statusCode == 401) {
+          throw CustomError('Token incorrecto!', 401);
+        }
+      }
+      throw CustomError('Error inesperado!', 500);
+    } catch (e) {
+      throw CustomError('Error Inesperado!', 500);
+    }
   }
 
   @override
@@ -28,7 +44,6 @@ class AuthDatasourceImplementation extends AuthDatasource {
         '/auth/login',
         data: {'email': email, 'password': password},
       );
-
       if (response.statusCode == 201) {
         return UserMapper.fromJson(response.data);
       } else {

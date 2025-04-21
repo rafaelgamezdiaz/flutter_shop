@@ -17,11 +17,6 @@ class AuthRepositoryImplementation extends AuthRepository {
     return authDatasource.login(email, password);
   }
 
-  // @override
-  // Future<void> logout() {
-  //   return authDatasource.logout();
-  // }
-
   @override
   Future<User> register(String email, String password, String fullName) {
     return authDatasource.register(email, password, fullName);
