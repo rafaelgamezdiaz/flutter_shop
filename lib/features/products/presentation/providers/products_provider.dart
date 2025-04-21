@@ -13,10 +13,10 @@ class ProductsNotifier extends StateNotifier<ProductsState> {
   final ProductsRepository productsRepository;
   ProductsNotifier({required this.productsRepository})
     : super(ProductsState()) {
-    loadNextPAge();
+    loadNextPage();
   }
 
-  Future loadNextPAge() async {
+  Future loadNextPage() async {
     if (state.isLastPage || state.isLoading) return;
 
     state = state.copyWith(isLoading: true);

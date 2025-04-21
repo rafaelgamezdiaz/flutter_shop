@@ -26,8 +26,16 @@ final goRouterProvider = Provider((ref) {
         builder: (context, state) => const RegisterScreen(),
       ),
 
+      ///* Products Routes
+      GoRoute(path: '/', builder: (context, state) => ProductsScreen()),
+
       ///* Product Routes
-      GoRoute(path: '/', builder: (context, state) => const ProductsScreen()),
+      GoRoute(
+        path: '/product/:id',
+        builder:
+            (context, state) =>
+                ProductScreen(productId: state.params['id'] ?? 'no-id'),
+      ),
     ],
     redirect: (context, state) {
       final isGoingTo = state.subloc; // Ruta actual o a la que se intenta ir

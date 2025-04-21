@@ -1,15 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
+import 'package:go_router/go_router.dart';
 import 'package:teslo_shop/features/products/presentation/providers/products_provider.dart';
 import 'package:teslo_shop/features/products/presentation/widgets/widgets.dart';
 import 'package:teslo_shop/features/shared/shared.dart';
 
 class ProductsScreen extends StatelessWidget {
   const ProductsScreen({super.key});
-
-  // bool _isLoadingMore = false;
-  // bool _isLastPage = false;
 
   @override
   Widget build(BuildContext context) {
@@ -47,10 +45,15 @@ class _ProductsViewState extends ConsumerState<_ProductsView> {
   void initState() {
     super.initState();
 
-    // TODO infinite scroll pending
-    ref.read(productsProvider.notifier).loadNextPAge();
+    ref.read(productsProvider.notifier).loadNextPage();
 
     // 400 pixeles hacemos la
+    scrollController.addListener(() {
+      if (scrollController.position.pixels + 400 >=
+          scrollController.position.maxScrollExtent) {
+        ref.read(productsProvider.notifier).loadNextPage();
+      }
+    });
   }
 
   @override
@@ -74,7 +77,10 @@ class _ProductsViewState extends ConsumerState<_ProductsView> {
         itemCount: produtsState.products.length,
         itemBuilder: (context, index) {
           final product = produtsState.products[index];
-          return ProductCard(product: product);
+          return GestureDetector(
+            onTap: () => context.push('/product/${product.id}'),
+            child: ProductCard(product: product),
+          );
         },
       ),
     );
