@@ -10,32 +10,53 @@ class ProductScreen extends ConsumerWidget {
   final String productId;
   const ProductScreen({super.key, required this.productId});
 
+  void showSnackBar(BuildContext context, String message) {
+    ScaffoldMessenger.of(context).clearSnackBars();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message), duration: const Duration(seconds: 2)),
+    );
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final productState = ref.watch(productProvider(productId));
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Editar Producto'),
-        actions: [
-          IconButton(
-            onPressed: () {},
-            icon: const Icon(Icons.camera_alt_outlined),
-          ),
-        ],
-      ),
-      body:
-          productState.isLoading
-              ? const FullScreenLoader()
-              : _ProductView(product: productState.product!),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () async {
-          if (productState.product == null) return;
-          await ref
-              .read(productFormProvider(productState.product!).notifier)
-              .onSubmit();
-        },
-        child: const Icon(Icons.save_as_outlined),
+    return GestureDetector(
+      onTap: () => FocusScope.of(context).unfocus(),
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('Editar Producto'),
+          actions: [
+            IconButton(
+              onPressed: () {},
+              icon: const Icon(Icons.camera_alt_outlined),
+            ),
+          ],
+        ),
+        body:
+            productState.isLoading
+                ? const FullScreenLoader()
+                : _ProductView(product: productState.product!),
+        floatingActionButton: FloatingActionButton(
+          onPressed: () async {
+            FocusScope.of(context).unfocus();
+            if (productState.product == null) return;
+            final result =
+                await ref
+                    .read(productFormProvider(productState.product!).notifier)
+                    .onSubmit();
+
+            // Verifica si el widget está montado antes de usar el BuildContext
+            if (!context.mounted) return;
+
+            if (result) {
+              showSnackBar(context, 'Producto guardado correctamente');
+            } else {
+              showSnackBar(context, 'Error al guardar el producto');
+            }
+          },
+          child: const Icon(Icons.save_as_outlined),
+        ),
       ),
     );
   }
@@ -65,7 +86,11 @@ class _ProductView extends ConsumerWidget {
 
         const SizedBox(height: 10),
         Center(
-          child: Text(productForm.title.value, style: textStyles.titleSmall),
+          child: Text(
+            productForm.title.value,
+            style: textStyles.titleSmall,
+            textAlign: TextAlign.center,
+          ),
         ),
         const SizedBox(height: 10),
         _ProductInformation(product: product),
@@ -205,6 +230,7 @@ class _SizeSelector extends StatelessWidget {
           }).toList(),
       selected: Set.from(selectedSizes),
       onSelectionChanged: (newSelection) {
+        FocusScope.of(context).unfocus();
         onSelectedSizes(List.from(newSelection));
       },
       multiSelectionEnabled: true,
@@ -242,6 +268,7 @@ class _GenderSelector extends StatelessWidget {
             }).toList(),
         selected: {selectedGender},
         onSelectionChanged: (newSelection) {
+          FocusScope.of(context).unfocus();
           onSelectedGenre(newSelection.first);
         },
       ),

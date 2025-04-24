@@ -1,22 +1,28 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:formz/formz.dart';
 import 'package:teslo_shop/config/config.dart';
+import 'package:teslo_shop/features/products/presentation/providers/providers.dart';
 import 'package:teslo_shop/features/shared/shared.dart';
 
 import '../../../domain/domain.dart';
 
 final productFormProvider = StateNotifierProvider.autoDispose
     .family<ProductFormNotifier, ProductFormState, Product>((ref, product) {
-      final createUpdateProductCallback;
-      // TODO create onUpdateCallback
+      final createUpdateProductCallback =
+          ref.watch(productsProvider.notifier).createOrUpdateProduct;
+
+      //   final createUpdateProductCallback =
+      // ref.watch(productsRepositoryProvider).createUpdateProduct;
+
       return ProductFormNotifier(
         product: product,
-        // TODO onSubmitCallback
+        onSubmitCallback: createUpdateProductCallback,
       );
     });
 
 class ProductFormNotifier extends StateNotifier<ProductFormState> {
-  final void Function(Map<String, dynamic> productLike)? onSubmitCallback;
+  final Future<bool> Function(Map<String, dynamic> productLike)?
+  onSubmitCallback;
 
   ProductFormNotifier({this.onSubmitCallback, required Product product})
     : super(
@@ -28,6 +34,7 @@ class ProductFormNotifier extends StateNotifier<ProductFormState> {
           inStock: Stock.dirty(value: product.stock),
           sizes: product.sizes,
           description: product.description,
+          gender: product.gender,
           tags: product.tags.join(', '),
           images: product.images,
         ),
@@ -36,12 +43,11 @@ class ProductFormNotifier extends StateNotifier<ProductFormState> {
   Future<bool> onSubmit() async {
     _touchedEveryThing();
 
-    print('Entro en el onSubmit $onSubmitCallback');
     if (!state.idFormValid) return false;
-    // if (onSubmitCallback == null) return false;
+    if (onSubmitCallback == null) return false;
 
     final productLike = {
-      'id': state.id,
+      'id': (state.id == 'new') ? null : state.id,
       'title': state.title.value,
       'slug': state.slug.value,
       'price': state.price.value,
@@ -61,8 +67,11 @@ class ProductFormNotifier extends StateNotifier<ProductFormState> {
               .toList(),
     };
 
-    return true;
-    // TODO llamar onSubmitCallback
+    try {
+      return await onSubmitCallback!(productLike);
+    } catch (e) {
+      return false;
+    }
   }
 
   void _touchedEveryThing() {
