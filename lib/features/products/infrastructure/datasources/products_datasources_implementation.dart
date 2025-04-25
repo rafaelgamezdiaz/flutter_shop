@@ -20,6 +20,41 @@ class ProductsDatasourcesImplementation extends ProductsDatasource {
         ),
       );
 
+  Future<String> _uploadPhoto(String path) async {
+    try {
+      final fileName = path.split('/').last;
+      final formData = FormData.fromMap({
+        'file': await MultipartFile.fromFile(path, filename: fileName),
+      });
+
+      final response = await dio.post('/files/product', data: formData);
+      return response.data['image'];
+    } on DioException catch (e) {
+      if (e.response!.statusCode == 404) {
+        throw ProductNotFound();
+      }
+      throw Exception();
+    } catch (e) {
+      throw Exception('Error al subir la foto: $e');
+    }
+  }
+
+  Future<List<String>> _uploadPhotos(List<String> photos) async {
+    // final List<String> urls = [];
+
+    final photosToUpload =
+        photos.where((element) => element.contains('/')).toList();
+    final photosToIgnore =
+        photos.where((element) => !element.contains('/')).toList();
+
+    final List<Future<String>> uploadJob =
+        photosToUpload.map((e) => _uploadPhoto(e)).toList();
+
+    final newImages = await Future.wait(uploadJob);
+
+    return [...photosToIgnore, ...newImages];
+  }
+
   @override
   Future<Product> createUpdateProduct(Map<String, dynamic> productLike) async {
     try {
@@ -28,6 +63,8 @@ class ProductsDatasourcesImplementation extends ProductsDatasource {
       final String url =
           (productId == null) ? '/products' : '/products/$productId';
       productLike.remove('id');
+
+      productLike['images'] = await _uploadPhotos(productLike['images']);
 
       final response = await dio.request(
         url,
